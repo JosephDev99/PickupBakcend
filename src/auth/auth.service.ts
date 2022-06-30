@@ -5,7 +5,14 @@ import { UserRepository } from './user.repository';
 import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-
+import { User } from './user.entity';
+import { UpdatePasswordDto } from "./dto/update.dto";
+import { Request } from "express"
+declare module "express" {
+  export interface Request {
+    user: any
+  }
+}
 @Injectable()
 export class AuthService {
 
@@ -38,42 +45,22 @@ export class AuthService {
 
     return { accessToken };
   }
-  // remove(id: string) {
-  //   return this.userRepository.deleteOne({ id: id }).exec();
-  // }
-  // async deleteUser(request, response): Promise<any> {
-  //   try {
-  //     const cookie = request.cookies['jwt'];
-  //     const data = await this.jwtService.verifyAsync(cookie);
-  //     if (!data) {
-  //       throw new HttpException('Invalid data', HttpStatus.FORBIDDEN);
-  //     }
-  //     const user = await this.userRepository.findOne({ email: data["email"] });
-  //     console.log("clear cookie");
+  public async refresh(user: User): Promise<string> {
+    this.userRepository.update(user.id, {});
 
-  //     await this.userRepository.delete({ email: user.email });
-  //     return await response.clearCookie('jwt');
-  //   }
-  //   catch (error) {
-  //     throw new HttpException('log in first', HttpStatus.FORBIDDEN);
-  //   }
-  // }
-  // async update(signInDto: SignInDto): Promise<any> {
-  //   const user = await this.userRepository.validateUserPassword(signInDto);
+    return this.jwtService.sign(user);
+  }
+  public async updatePassword(body: UpdatePasswordDto, req: Request): Promise<User> {
+    const user: User = <User>req.user;
 
-  //   if (!user) {
-  //     throw new UnauthorizedException('Invalid Credentials');
-  //   }
+    user.password = body.password;
 
-  //   const payload: JwtPayload = {
-  //     id: user.id,
-  //     email: user.email,
-  //     name: user.name
-  //   }
-
-  //   const accessToken = await this.jwtService.sign(payload);
-  //   this.logger.debug(`Successfully Generated JWT Token with payload ${JSON.stringify(payload)}`);
-
-  //   return { accessToken };
-  // }
+    return this.userRepository.save(user);
+  }
+  public async delete(body: UpdatePasswordDto, req: Request): Promise<User> {
+    const user: User = <User>req.user;
+    if (user.password = body.password) {
+      return this.userRepository.remove(user);
+    }
+  }
 }

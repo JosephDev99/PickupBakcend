@@ -8,13 +8,18 @@ import {
   Logger,
   Param,
   Res,
-  Patch
+  Patch,
+  Put,
+  UseInterceptors,
+  ClassSerializerInterceptor
 } from '@nestjs/common';
-import { Response, Request } from 'express';
+import { Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
+import { User } from './user.entity';
+import { UpdatePasswordDto } from './dto/update.dto';
 // import { DeleteDto } from './dto/delete.dto';
 
 @Controller('auth')
@@ -39,18 +44,21 @@ export class AuthController {
   test(@Req() req) {
     console.log(req.user);
   }
-  // @Delete(":id")
-  // remove(@Param("id") id: string) {
-  //   return this.authService.remove(id);
-  // }
-  // @Delete('/delete')
-  // async deleteUser(@Req() request: Request, @Res() response: Response): Promise<any> {
-  //   console.log("sdfsffsdfsdfsdfsdf", request);
-  //   return await this.authService.deleteUser(request, response);
-  // }
-  // @Patch('/update')
-  // update(@Body() signUpDto: SignUpDto): Promise<void> {
-  //   this.logger.verbose('Updating!'); // logging status
-  //   return this.authService.update(signUpDto);
-  // }
+  @Post('refresh')
+  @UseGuards(AuthGuard())
+  refresh(@Req() { user }: Request): Promise<string | never> {
+    return this.authService.refresh(<User>user);
+  }
+  @Put('/update')
+  @UseGuards(AuthGuard())
+  @UseInterceptors(ClassSerializerInterceptor)
+  updatePassword(@Body() body: UpdatePasswordDto, @Req() req: Request): Promise<User> {
+    return this.authService.updatePassword(body, req);
+  }
+  @Delete('/delete')
+  @UseGuards(AuthGuard())
+  delete(@Body() body: UpdatePasswordDto, @Req() req: Request): Promise<User> {
+    return this.authService.delete(body, req);
+  }
+
 }
